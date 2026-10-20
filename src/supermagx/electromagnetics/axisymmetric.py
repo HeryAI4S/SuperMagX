@@ -34,9 +34,11 @@ class FieldResult:
     relative_change: float
 
 
-def _ellipk(m):
+def _ellipk(m, complement):
     m = np.asarray(m)
-    return np.where(m > .9, ellipkm1(1 - m), ellipk(m))
+    # 1-m loses all bits when the two loops nearly coincide. Form the
+    # complementary parameter from squared physical separation instead.
+    return np.where(m > .9, ellipkm1(complement), ellipk(m))
 
 
 def loop_field(source_r, dz, target_r):
@@ -52,14 +54,21 @@ def loop_field(source_r, dz, target_r):
     if np.any(~axis & (d2 == 0)):
         raise ValueError("filament field is singular at its source")
     q = np.sqrt((a + rsafe)**2 + dz**2)
-    m = 4 * a * rsafe / q**2
-    k, e = _ellipk(m), ellipe(m)
+    complement = d2/q**2
+    m = np.where(complement < .01, 1-complement, 4*a*rsafe/q**2)
+    k, e = _ellipk(m, complement), ellipe(m)
     common = MU0 / (2 * pi * q)
     br = common * dz / np.where(axis, 1.0, rsafe) * (
         -k + (a*a + rsafe*rsafe + dz*dz) / d2 * e)
     bz = common * (k + (a*a - rsafe*rsafe - dz*dz) / d2 * e)
-    bz_axis = MU0 * a*a / (2 * (a*a + dz*dz)**1.5)
-    return np.where(axis, 0.0, br), np.where(axis, bz_axis, bz)
+    axis_d2 = a*a + dz*dz
+    bz_axis = MU0 * a*a / (2 * axis_d2**1.5)
+    # Maxwell's source-free on-axis expansion avoids cancellation of two
+    # nearly equal elliptic-integral terms in Br as r -> 0.
+    near_axis = rsafe < 1e-4*a
+    br_axis = 3*MU0*a*a*dz*rsafe/(4*axis_d2**2.5)
+    bz_axis += 3*MU0*a*a*rsafe**2*(a*a-4*dz*dz)/(8*axis_d2**3.5)
+    return np.where(near_axis, br_axis, br), np.where(near_axis, bz_axis, bz)
 
 
 def loop_mutual(source_r, target_r, dz):
@@ -72,13 +81,16 @@ def loop_mutual(source_r, target_r, dz):
                                     np.asarray(dz, float))
     if np.any(a <= 0) or np.any(b <= 0):
         raise ValueError("loop radii must be positive")
-    m = 4*a*b / ((a+b)**2 + dz*dz)
-    if np.any(m >= 1):
+    q2 = (a+b)**2 + dz*dz
+    complement = ((a-b)**2 + dz*dz)/q2
+    if np.any(complement == 0):
         raise ValueError("coincident filaments have divergent mutual inductance")
+    m = np.where(complement < .01, 1-complement, 4*a*b/q2)
     # A direct K-E subtraction loses significant digits when m is tiny.
     small = m < 1e-6
     safe_m = np.where(small, .5, m)
-    numerator = (2-safe_m)*_ellipk(safe_m) - 2*ellipe(safe_m)
+    numerator = ((2-safe_m)*_ellipk(safe_m, complement)
+                 - 2*ellipe(safe_m))
     usual = MU0*np.sqrt(a*b)*numerator/np.sqrt(safe_m)
     series = MU0*np.sqrt(a*b)*(pi/16*m**1.5 + 3*pi/64*m**2.5)
     return np.where(small, series, usual)
@@ -113,20 +125,73 @@ def _turn_field(turn: RectTurn, r: float, z: float, order: int):
     return float(weights@br), float(weights@bz)
 
 
+@lru_cache(maxsize=2048)
+def _radial_nodes(r_inner: float, r_outer: float, profile: str, order: int):
+    x, w = _unit_gauss(order)
+    width = r_outer-r_inner
+    radii = r_inner + width*x
+    if profile == "dc_equilibrium":
+        w = width*w/(radii*np.log1p(width/r_inner))
+    return radii, w
+
+
+def _axial_average(source_r, target_r, centre_dz, source_h, target_h,
+                   order: int):
+    """Exact axial convolution weight, with one-dimensional Gauss quadrature.
+
+    For two uniform axial intervals the difference-coordinate density is a
+    trapezoid. Its three linear pieces replace a two-dimensional z integral.
+    Only the circular-loop kernel is numerically integrated.
+    """
+    half_sum = (source_h+target_h)/2
+    half_difference = abs(source_h-target_h)/2
+    breaks = (-half_sum, -half_difference, half_difference, half_sum)
+    x, w = _unit_gauss(order)
+    result = np.zeros(np.broadcast_shapes(np.shape(source_r),
+                                          np.shape(target_r)))
+    for lower, upper in zip(breaks[:-1], breaks[1:]):
+        if upper == lower:
+            continue
+        difference = lower+(upper-lower)*x
+        overlap = np.minimum(source_h, target_h)
+        overlap = np.minimum(overlap, half_sum-np.abs(difference))
+        weights = (upper-lower)*w*overlap/(source_h*target_h)
+        kernel = loop_mutual(np.asarray(source_r)[..., None],
+                             np.asarray(target_r)[..., None],
+                             centre_dz+difference)
+        result += np.sum(kernel*weights, axis=-1)
+    return result
+
+
+@lru_cache(maxsize=8192)
+def _pair_mutual_shape(shape_a: tuple, shape_b: tuple,
+                       centre_dz: float, order: int):
+    ar, aw = _radial_nodes(shape_a[0], shape_a[1], shape_a[3], order)
+    br, bw = _radial_nodes(shape_b[0], shape_b[1], shape_b[3], order)
+    axial = _axial_average(ar[:, None], br[None, :],
+                            centre_dz, shape_a[2], shape_b[2], order)
+    return float(np.sum(aw[:, None]*bw[None, :]*axial))
+
+
 def _pair_mutual(a: RectTurn, b: RectTurn, order: int):
-    # Shift target/source grids to avoid coincident quadrature nodes.
-    ar, az, aw = _turn_nodes(a, order)
-    br, bz, bw = _turn_nodes(b, order+1)
-    kernel = loop_mutual(ar[:, None], br[None, :], az[:, None]-bz[None, :])
-    return float(aw @ kernel @ bw)
+    shape_a = (a.r_inner, a.r_outer, a.height, a.source_profile)
+    shape_b = (b.r_inner, b.r_outer, b.height, b.source_profile)
+    if shape_a > shape_b:
+        shape_a, shape_b = shape_b, shape_a
+    return _pair_mutual_shape(shape_a, shape_b,
+                              abs(a.z_center-b.z_center), order)
 
 
-def _self_mutual(turn: RectTurn, order: int):
+@lru_cache(maxsize=2048)
+def _self_mutual_shape(r_inner: float, r_outer: float, height: float,
+                       profile: str, order: int):
     """Duffy quadrature of the integrable logarithmic self singularity.
 
     Translation invariance in z collapses one integral. Radial pair symmetry
     leaves the triangle r2>=r1. Two Duffy triangles resolve (dr,dz)=(0,0).
     """
+    turn = RectTurn(r_inner, r_outer, 0.0, height, "cache",
+                    source_profile=profile)
     x, w = _unit_gauss(order)
     r1 = turn.r_inner + turn.width*x[:, None, None]
     umax = turn.r_outer-r1
@@ -144,6 +209,11 @@ def _self_mutual(turn: RectTurn, order: int):
     norm = (turn.width*turn.height if turn.source_profile == "uniform"
             else turn.h_integral)
     return 4*out/norm**2
+
+
+def _self_mutual(turn: RectTurn, order: int):
+    return _self_mutual_shape(turn.r_inner, turn.r_outer, turn.height,
+                              turn.source_profile, order)
 
 
 class AxisymmetricMagnetostatics:

@@ -10,7 +10,7 @@ import numpy as np
 from .electromagnetics import AxisymmetricMagnetostatics
 from .excitation import PiecewiseLinearCurrent
 from .geometry import Magnet, RadialGroup, RectTurn, radial_stack
-from .losses import eddy_energy, joule_energy
+from .losses import eddy_energy, eddy_energy_slab_modes, joule_energy
 
 
 def _geometry(spec: Mapping[str, Any]) -> Magnet:
@@ -63,9 +63,18 @@ def run_case(case: Mapping[str, Any]) -> dict[str, Any]:
     }
     if "eddy" in case:
         eddy = case["eddy"]
-        qe = eddy_energy(magnet, waveform, resistivity=rho,
-                         gamma=float(eddy["gamma"]),
-                         field_order=int(eddy.get("field_order", 6)))
+        kind = eddy.get("model", "calibrated_one_pole")
+        if kind == "slab_modes":
+            qe = eddy_energy_slab_modes(
+                magnet, waveform, resistivity=rho,
+                modes=eddy.get("modes", 16),
+                field_order=int(eddy.get("field_order", 6)))
+        elif kind == "calibrated_one_pole":
+            qe = eddy_energy(magnet, waveform, resistivity=rho,
+                             gamma=float(eddy["gamma"]),
+                             field_order=int(eddy.get("field_order", 6)))
+        else:
+            raise ValueError("eddy.model must be slab_modes or calibrated_one_pole")
         losses.update(eddy_j=qe.total_j, eddy_tail_j=qe.tail_j,
                       eddy_by_zone_j=qe.by_zone, eddy_model=qe.model,
                       total_j=qj.total_j+qe.total_j)

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import isfinite, log, pi
+from math import isfinite, log1p, pi
 from typing import Hashable, Iterable
 
 
@@ -62,7 +62,7 @@ class RectTurn:
     @property
     def h_integral(self) -> float:
         """Integral of 1/r over the metal cross-section, in metres."""
-        return self.height * log(self.r_outer / self.r_inner)
+        return self.height * log1p(self.width / self.r_inner)
 
     def resistance(self, resistivity: float) -> float:
         """Joule-equivalent ring resistance for the selected source profile."""
