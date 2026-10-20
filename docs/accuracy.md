@@ -6,15 +6,20 @@ The test suite checks the finite-rectangle on-axis field against an
 independent two-dimensional adaptive integral, arbitrary-zone superposition,
 mutual reciprocity and positive eigenvalues for a small winding, analytic
 ring resistance for both `1/r` and uniform source profiles, exact
-piecewise-linear `I²R` integration, and complete
-post-waveform eddy tail bookkeeping. Run `python -m pytest -q` to repeat.
+piecewise-linear `I²R` integration, near-coincident and near-axis kernel
+limits, axial convolution against an independent double integral, the
+short-ramp diffusion limit, and complete post-waveform eddy tail bookkeeping.
+Run `python -m pytest -q` to repeat.
 
 These tests check implementation consistency. They do not validate material
 data or assert blanket agreement with a finite-element model.
 
 ## External FEM comparison
 
-The induced-loss model is explicitly labeled as screening. A match on one
+Both induced-loss models are explicitly labeled as screening. The slab-mode
+option removes an empirical time constant for its **ideal 1D slab** problem;
+its centre-field and independent-axis approximations are still unvalidated
+against the full winding. A match on one
 geometry and waveform does not establish a transferable error bound across
 conductor sizes, layouts or pulse durations. The package has not yet been
 validated against converged FEM solutions over a specified design domain.

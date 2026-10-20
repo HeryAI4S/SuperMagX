@@ -41,7 +41,7 @@ electromagnetics ---> losses
 | `excitation` | Independent zone currents on a piecewise-linear time grid |
 | `electromagnetics` | Free-space axisymmetric field at air points and finite-cross-section zone mutual matrix |
 | `losses.joule` | Exact time integration of fixed-resistivity `I²R`; resistance follows each turn's selected current-density profile |
-| `losses.eddy` | Turn-centre, thin-rectangle eddy screening model with explicit calibrated diffusion factor and complete post-waveform tail |
+| `losses.eddy` | Turn-centre screening with either calibrated one-pole response or unfitted ideal-slab diffusion modes; both include the post-waveform tail |
 | `thermal`, `mechanics` | Reserved boundaries; no temperature, displacement or stress field is claimed |
 
 `python -m supermagx` reads a JSON case and writes a JSON result. The output
@@ -61,7 +61,18 @@ integrated over the finite metal rectangles. `field()` doubles Gauss order
 until the field change is below the requested tolerance, and raises
 `ConvergenceError` otherwise. The finite-turn mutual calculation uses
 adaptive pair quadrature and a Duffy transformation for the logarithmic
-self-term. There is no empirical magnetic-field multiplier in this package.
+self-term. The pair integral analytically collapses the two axial coordinates
+to their trapezoidal difference distribution. Near-coincident loops use the
+complementary elliptic parameter formed from physical separation; near-axis
+radial fields use the Maxwell-series limit. There is no empirical
+magnetic-field multiplier in this package.
+
+For JSON losses, `"eddy": {"model": "slab_modes", "modes": 16}` selects an
+unfitted ideal-slab diffusion expansion. The existing `"eddy": {"gamma":
+...}` selects the calibrated one-pole screen. The slab model resolves odd
+diffusion modes in each conductor dimension but still uses the applied field
+at the turn centre and independent slab axes. Its tail heat is integrated
+after the last waveform knot. See the [derivation](docs/first_principles.md).
 
 This is numerical convergence **within the stated free-space, prescribed-DC-
 current model**. Consecutive quadrature agreement is not a mathematical error
@@ -69,9 +80,10 @@ certificate or a guarantee of 1% agreement with COMSOL. The precision-
 controlled `field()` accepts observation points outside metal; the separate
 `screening_coefficients()` used for eddy estimates samples turn centres and
 does not have the same accuracy claim. Iron, leads, joints, actual supply
-circuits, magnetic diffusion, temperature-dependent resistivity and mechanical
-preload are outside this phase. The eddy model remains calibrated and
-approximate even if the magnetostatic field integral is highly converged.
+circuits, fully coupled magnetic diffusion, temperature-dependent resistivity
+and mechanical preload are outside this phase. Both eddy models remain
+screening approximations even if the magnetostatic field integral is highly
+converged.
 
 See [accuracy notes](docs/accuracy.md) before using results as a design gate.
 

@@ -7,8 +7,9 @@ loss, thermal or mechanical solver. Excitation is independent of geometry.
 Electromagnetics consumes geometry and a specified vector of zone currents.
 Its zone coefficient and mutual matrix outputs keep the original zone order.
 The transport-loss module consumes geometry, fixed resistivity and a current
-waveform. The induced-loss module consumes geometry, waveform and an explicit
-diffusion calibration, and computes its own turn-centre field coefficients.
+waveform. The induced-loss module computes turn-centre field coefficients and
+offers an explicitly calibrated one-pole response or unfitted ideal-slab
+diffusion modes. Neither option solves coupled winding-scale magnetic diffusion.
 
 The planned thermal module will consume a time- and space-resolved heat source,
 not just total joules. The planned structural module will consume distributed
