@@ -42,12 +42,15 @@ electromagnetics ---> losses
 | `electromagnetics` | Free-space axisymmetric field at air points and finite-cross-section zone mutual matrix |
 | `losses.joule` | Exact time integration of fixed-resistivity `I²R`; resistance follows each turn's selected current-density profile |
 | `losses.eddy` | Turn-centre screening with either calibrated one-pole response or unfitted ideal-slab diffusion modes; both include the post-waveform tail |
+| `losses.network` | Coupled conducting-cell magnetic diffusion and pulse heat, including the post-waveform eddy tail |
 | `thermal`, `mechanics` | Reserved boundaries; no temperature, displacement or stress field is claimed |
 
 `python -m supermagx` reads a JSON case and writes a JSON result. The output
 states the field-probe currents, quadrature order/change, per-zone losses,
 and the status of the unsolved modules. The sample input is
 [`examples/two_zone_case.json`](examples/two_zone_case.json).
+The coupled-loss example is
+[`examples/coupled_loss_case.json`](examples/coupled_loss_case.json).
 
 ## Numerical model and precision
 
@@ -74,16 +77,26 @@ diffusion modes in each conductor dimension but still uses the applied field
 at the turn centre and independent slab axes. Its tail heat is integrated
 after the last waveform knot. See the [derivation](docs/first_principles.md).
 
+`"eddy": {"model": "coupled_network", "radial_cells": 4,
+"axial_cells": 4, "refinement_meshes": [[2, 2], [3, 3], [4, 4]]}` selects
+the coupled cell model. The same `resistivity_ohm_m` is used for transport
+and induced currents. Output separates `joule_j`, `eddy_before_tail_j`,
+`eddy_tail_j`, and `total_j`; `network_refinement` shows mesh-to-mesh changes.
+Induced heat is not attributed to individual power zones because its modes
+couple zones. Increase cell counts until **eddy heat itself** stabilizes for
+the case of interest. The slab model remains useful for broad scans because
+the network's dense mutual matrix and eigenproblem can be expensive.
+
 This is numerical convergence **within the stated free-space, prescribed-DC-
 current model**. Consecutive quadrature agreement is not a mathematical error
 certificate or a guarantee of 1% agreement with COMSOL. The precision-
 controlled `field()` accepts observation points outside metal; the separate
 `screening_coefficients()` used for eddy estimates samples turn centres and
 does not have the same accuracy claim. Iron, leads, joints, actual supply
-circuits, fully coupled magnetic diffusion, temperature-dependent resistivity
-and mechanical preload are outside this phase. Both eddy models remain
-screening approximations even if the magnetostatic field integral is highly
-converged.
+circuits, conductive supports, temperature-dependent resistivity and
+mechanical preload are outside this phase. The one-pole and slab eddy models
+remain screening approximations; the cell model adds coupled azimuthal
+diffusion within the metal but still needs mesh and FEM validation.
 
 See [accuracy notes](docs/accuracy.md) before using results as a design gate.
 
