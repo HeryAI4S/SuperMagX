@@ -4,8 +4,9 @@
 
 The test suite checks the finite-rectangle on-axis field against an
 independent two-dimensional adaptive integral, arbitrary-zone superposition,
-mutual reciprocity and positive eigenvalues for a small winding, exact DC
-ring resistance, exact piecewise-linear `I²R` integration, and complete
+mutual reciprocity and positive eigenvalues for a small winding, analytic
+ring resistance for both `1/r` and uniform source profiles, exact
+piecewise-linear `I²R` integration, and complete
 post-waveform eddy tail bookkeeping. Run `python -m pytest -q` to repeat.
 
 These tests check implementation consistency. They do not validate material
@@ -24,8 +25,9 @@ validated against converged FEM solutions over a specified design domain.
    constitutive laws and the list of output quantities.
 2. Refine the FEM mesh, time step and solver tolerances independently for
    each quantity, especially local field, voltage and peak stress.
-3. Compare this package at identical metal geometry, current history,
-   zone orientation and resistivity. Keep source case identifiers and hashes.
+3. Compare this package at identical metal geometry, current-density profile,
+   current history, zone orientation, magnetic boundary conditions and
+   resistivity. Keep source case identifiers and hashes.
 4. Use held-out designs. If a requested quantity is not within its own
    tolerance, use the FEM result and improve the relevant module.
 

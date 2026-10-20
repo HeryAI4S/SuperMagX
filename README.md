@@ -40,7 +40,7 @@ electromagnetics ---> losses
 | `geometry` | Finite rectangular turns and arbitrary radial-group/zone mapping |
 | `excitation` | Independent zone currents on a piecewise-linear time grid |
 | `electromagnetics` | Free-space axisymmetric field at air points and finite-cross-section zone mutual matrix |
-| `losses.joule` | Exact time integration of fixed-resistivity `I²R` with exact `1/r` DC ring resistance |
+| `losses.joule` | Exact time integration of fixed-resistivity `I²R`; resistance follows each turn's selected current-density profile |
 | `losses.eddy` | Turn-centre, thin-rectangle eddy screening model with explicit calibrated diffusion factor and complete post-waveform tail |
 | `thermal`, `mechanics` | Reserved boundaries; no temperature, displacement or stress field is claimed |
 
@@ -51,8 +51,12 @@ and the status of the unsolved modules. The sample input is
 
 ## Numerical model and precision
 
-The source current density inside each turn is `J_phi = I/(r H)` with
-`H = ∫_metal dr dz / r`. Axisymmetric circular-filament Green functions are
+Each turn selects `source_profile = "dc_equilibrium"` (default,
+`J_phi = I/(r H)`, `H = ∫_metal dr dz / r`) or `"uniform"`
+(`J_phi = I/A`, as in a uniform external-current-density FEM feature).
+The choice is available on `RectTurn` and `RadialGroup` JSON entries and
+controls both magnetic sources and Joule resistance. Axisymmetric
+circular-filament Green functions are
 integrated over the finite metal rectangles. `field()` doubles Gauss order
 until the field change is below the requested tolerance, and raises
 `ConvergenceError` otherwise. The finite-turn mutual calculation uses

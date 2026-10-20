@@ -25,6 +25,8 @@ thermal modules with a documented convergence criterion.
 - SI metres, seconds, amperes, ohm-metres, tesla, henries, joules.
 - One `RectTurn` is one complete circular metal turn. A shared zone ID means
   the turns use the same series current; the user controls polarity per turn.
+- `source_profile` chooses `dc_equilibrium` (`1/r`) or `uniform` current density
+  per turn; this choice also determines its fixed-resistivity Joule resistance.
 - `radial_stack()` generates regular layouts. `explicit_turns` allows
   nonuniform positions and cross-sections, with any number of supply zones.
 - Conductors are normal metal with constant scalar resistivity. Passive

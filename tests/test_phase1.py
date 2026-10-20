@@ -43,6 +43,25 @@ def test_finite_cross_section_axis_field_against_independent_integral():
     assert result.relative_change < 1e-8
 
 
+def test_uniform_current_density_matches_independent_field_and_joule_integrals():
+    turn = RectTurn(.20, .24, -.04, .02, "A", source_profile="uniform")
+    area = turn.width * turn.height
+    expected_field = dblquad(
+        lambda z, r: 1234.0 / area * (4e-7 * math.pi) * r*r
+        / (2 * (r*r + z*z)**1.5),
+        turn.r_inner, turn.r_outer,
+        lambda _: turn.z_lower, lambda _: turn.z_upper,
+        epsabs=1e-12,
+    )[0]
+    model = AxisymmetricMagnetostatics(Magnet((turn,)), rtol=1e-8)
+    assert model.field(0, 0, {"A": 1234.0}).bz == pytest.approx(
+        expected_field, rel=2e-8)
+    rho = 6e-9
+    expected_r = 2*math.pi*rho*turn.r_center/area
+    assert turn.resistance(rho) == pytest.approx(expected_r, rel=1e-14)
+    assert model.mutual_matrix(rtol=3e-4)[0, 0] > 0
+
+
 def test_any_number_of_zones_superposes_and_rejects_missing_current():
     magnet = Magnet(tuple(RectTurn(0.2 + i * .02, 0.205 + i * .02,
                                    -.01, .01, f"z{i}") for i in range(5)))

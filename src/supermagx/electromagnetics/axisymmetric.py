@@ -1,7 +1,7 @@
 """Finite-cross-section, axisymmetric free-space magnetostatics.
 
 The loops are integrated over each conductor's actual r-z rectangle. The
-prescribed DC transport distribution is J_phi = I/(r H); it is *not* an FEM
+prescribed transport distribution is selected per turn; it is *not* an FEM
 solution for current redistribution, ferromagnets, or transient eddy currents.
 Numerical quadrature is refined and nonconvergence is reported explicitly.
 """
@@ -97,9 +97,13 @@ def _turn_nodes(turn: RectTurn, order: int):
     z = turn.z_lower + turn.height*x[None, :]
     rr = np.broadcast_to(r, (order, order)).ravel()
     zz = np.broadcast_to(z, (order, order)).ravel()
-    weights = (turn.width*turn.height * w[:, None]*w[None, :]
-               / np.broadcast_to(r, (order, order))
-               / turn.h_integral).ravel()
+    if turn.source_profile == "uniform":
+        weights = np.broadcast_to(w[:, None]*w[None, :],
+                                  (order, order)).ravel()
+    else:
+        weights = (turn.width*turn.height * w[:, None]*w[None, :]
+                   / np.broadcast_to(r, (order, order))
+                   / turn.h_integral).ravel()
     return rr, zz, weights
 
 
@@ -135,8 +139,11 @@ def _self_mutual(turn: RectTurn, order: int):
                  (umax*s*t, turn.height*s)):
         r2 = r1 + u
         kernel = loop_mutual(r1, r2, v)
-        out += float(np.sum(factor*(turn.height-v)*kernel/(r1*r2)))
-    return 4*out/turn.h_integral**2
+        profile = (1.0 if turn.source_profile == "uniform" else 1/(r1*r2))
+        out += float(np.sum(factor*(turn.height-v)*kernel*profile))
+    norm = (turn.width*turn.height if turn.source_profile == "uniform"
+            else turn.h_integral)
+    return 4*out/norm**2
 
 
 class AxisymmetricMagnetostatics:

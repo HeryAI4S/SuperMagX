@@ -11,7 +11,8 @@ from typing import Hashable, Iterable
 class RectTurn:
     """One circular conductor with a rectangular r-z metal cross-section.
 
-    The transport current density is proportional to 1/r within the metal.
+    ``dc_equilibrium`` gives J_phi proportional to 1/r. ``uniform`` prescribes
+    constant J_phi as in a uniform external-current-density FEM source.
     A negative direction reverses its magnetic polarity, not its resistance.
     """
 
@@ -21,6 +22,7 @@ class RectTurn:
     z_upper: float
     zone: Hashable
     direction: int = 1
+    source_profile: str = "dc_equilibrium"
 
     def __post_init__(self) -> None:
         values = (self.r_inner, self.r_outer, self.z_lower, self.z_upper)
@@ -34,6 +36,8 @@ class RectTurn:
             raise ValueError("direction must be -1 or +1")
         if self.zone is None:
             raise ValueError("zone cannot be None")
+        if self.source_profile not in ("dc_equilibrium", "uniform"):
+            raise ValueError("source_profile must be dc_equilibrium or uniform")
 
     @property
     def width(self) -> float:
@@ -61,10 +65,12 @@ class RectTurn:
         return self.height * log(self.r_outer / self.r_inner)
 
     def resistance(self, resistivity: float) -> float:
-        """Exact DC ring resistance for J_phi = I/(r H), in ohms."""
+        """Joule-equivalent ring resistance for the selected source profile."""
         if not isfinite(resistivity) or resistivity <= 0:
             raise ValueError("resistivity must be finite and positive")
-        return 2 * pi * resistivity / self.h_integral
+        if self.source_profile == "uniform":
+            return 2*pi*resistivity*self.r_center/(self.width*self.height)
+        return 2*pi*resistivity/self.h_integral
 
 
 @dataclass(frozen=True)
@@ -100,11 +106,12 @@ def stacked_layer(
     axial_centers: Iterable[float],
     zone: Hashable,
     direction: int = 1,
+    source_profile: str = "dc_equilibrium",
 ) -> tuple[RectTurn, ...]:
     """Generate one radial layer; each axial center represents a separate turn."""
     return tuple(
         RectTurn(r_inner, r_inner + width, z - height / 2, z + height / 2,
-                 zone, direction)
+                 zone, direction, source_profile)
         for z in axial_centers
     )
 
@@ -127,6 +134,7 @@ class RadialGroup:
     axial_pitch: float
     gap_after: float = 0.0
     direction: int = 1
+    source_profile: str = "dc_equilibrium"
 
     def __post_init__(self) -> None:
         if self.layers < 1 or self.turns_per_layer < 1:
@@ -141,6 +149,8 @@ class RadialGroup:
             raise ValueError("pitches must be at least the metal dimensions")
         if self.gap_after < 0 or self.direction not in (-1, 1):
             raise ValueError("gap must be nonnegative and direction +/-1")
+        if self.source_profile not in ("dc_equilibrium", "uniform"):
+            raise ValueError("source_profile must be dc_equilibrium or uniform")
 
 
 def radial_stack(r_start: float,
@@ -164,6 +174,7 @@ def radial_stack(r_start: float,
                            - group.metal_width/2)
             turns.extend(stacked_layer(metal_inner, group.metal_width,
                                        group.metal_height, z_centers,
-                                       group.zone, group.direction))
+                                       group.zone, group.direction,
+                                       group.source_profile))
         radius += group.layers*group.radial_pitch + group.gap_after
     return Magnet(tuple(turns))
