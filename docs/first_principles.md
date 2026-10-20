@@ -95,6 +95,48 @@ current redistribution, terminal circuit, spatial field gradients, or
 temperature-dependent resistivity. It is an unfitted alternative to the
 existing calibrated one-pole screening model, not a verified FEM replacement.
 
+## Coupled conducting-cell loss
+
+For a more resolved loss calculation, partition each metal turn into
+rectangular `r-z` cells. Each cell is an azimuthal current basis with
+`J_phi ∝ 1/r`. Its exact DC resistance is
+`R_c=2πρ/[h_c ln(r_o/r_i)]`. The finite-cross-section loop Green kernel
+gives the symmetric cell mutual matrix `L`. Each physical turn has one
+prescribed current, including turns sharing a power zone:
+
+\[
+L\dot{\boldsymbol i}+R\boldsymbol i=C^\mathsf{T}\boldsymbol v,
+\qquad C\boldsymbol i=\boldsymbol I(t).
+\]
+
+The `v` values represent turn voltages. Let `G` split each turn current in
+inverse proportion to cell resistance; columns of `Q` carry zero net current
+within a turn. Then `i=G I+Q q`, `C Q=0`, and `Qᵀ R G=0`. Projecting removes
+the unknown voltages:
+
+\[
+(Q^\mathsf{T}LQ)\dot{\boldsymbol q}+(Q^\mathsf{T}RQ)\boldsymbol q
+=-Q^\mathsf{T}LG\dot{\boldsymbol I}.
+\]
+
+The symmetric generalized eigenproblem `R_q u_m=λ_m L_q u_m`, with
+`u_mᵀ L_q u_n=δ_mn`, produces positive diffusion rates. Each modal equation
+is `y'_m+λ_m y_m=-f_m·I'`. For every linear current segment, the code
+integrates `λ_m∫y_m²dt` and adds the post-waveform tail `y_m(t_end)²/2`.
+Transport heat is `Σ_turn R_eff ∫I_turn²dt`; its cross term with induced
+heat vanishes because `Qᵀ R G=0`.
+
+Finite meshes omit internal modes within each cell. JSON
+`refinement_meshes` reports changes in eddy and total heat between meshes;
+successive agreement is evidence of numerical convergence, not a bound on
+model-form error or COMSOL discrepancy. The dense mutual matrix and
+eigensolve are costly for a large full magnet. Assumptions include constant
+resistivity, azimuthal currents, no conductive support or iron, no leads,
+and an initially relaxed internal current distribution. Joule heating after
+the last waveform knot is excluded; the internal eddy-current decay is
+included to infinite time. Set final transport current to zero when
+evaluating a completed pulse.
+
 ## Mathematical references
 
 - [NIST DLMF §19.12](https://dlmf.nist.gov/19.12) gives the near-singular

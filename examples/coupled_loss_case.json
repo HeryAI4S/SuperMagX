@@ -1,0 +1,28 @@
+{
+  "geometry": {
+    "kind": "explicit_turns",
+    "turns": [
+      {"r_inner": 0.135, "r_outer": 0.143, "z_lower": -0.016,
+       "z_upper": -0.004, "zone": "inner"},
+      {"r_inner": 0.150, "r_outer": 0.158, "z_lower": 0.004,
+       "z_upper": 0.016, "zone": "outer"}
+    ]
+  },
+  "pulse": {
+    "times_s": [0, 0.010, 0.011, 0.021],
+    "currents_a": {
+      "inner": [0, 30000, 30000, 0],
+      "outer": [0, 25000, 25000, 0]
+    }
+  },
+  "resistivity_ohm_m": 6e-9,
+  "probes_m": [[0, 0]],
+  "eddy": {
+    "model": "coupled_network",
+    "radial_cells": 4,
+    "axial_cells": 4,
+    "mutual_rtol": 1e-4,
+    "mutual_max_order": 32,
+    "refinement_meshes": [[2, 2], [3, 3], [4, 4]]
+  }
+}
