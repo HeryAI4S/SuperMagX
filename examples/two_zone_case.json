@@ -1,0 +1,38 @@
+{
+  "geometry": {
+    "kind": "radial_stack",
+    "r_start_m": 0.15,
+    "groups": [
+      {
+        "zone": "inner",
+        "layers": 1,
+        "turns_per_layer": 2,
+        "metal_width": 0.008,
+        "metal_height": 0.012,
+        "radial_pitch": 0.009,
+        "axial_pitch": 0.013,
+        "gap_after": 0.02
+      },
+      {
+        "zone": "outer",
+        "layers": 1,
+        "turns_per_layer": 2,
+        "metal_width": 0.008,
+        "metal_height": 0.012,
+        "radial_pitch": 0.009,
+        "axial_pitch": 0.013
+      }
+    ]
+  },
+  "pulse": {
+    "times_s": [0, 0.01, 0.011, 0.021],
+    "currents_a": {
+      "inner": [0, 30000, 30000, 0],
+      "outer": [0, 20000, 20000, 0]
+    }
+  },
+  "resistivity_ohm_m": 6e-9,
+  "probes_m": [[0, 0], [0.05, 0.02]],
+  "electromagnetics": {"rtol": 1e-7},
+  "eddy": {"gamma": 1.0}
+}
