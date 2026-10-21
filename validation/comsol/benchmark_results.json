@@ -1,0 +1,190 @@
+{
+  "description": "Axisymmetric solid-ring magnetic diffusion; conditional p=2 mesh extrapolation",
+  "comsol_version": "6.4.0.429",
+  "power_expression": "IntSurface(2*pi*r*mf.Qh)",
+  "source_hash_convention": "SHA-256 of Git-normalized LF source bytes",
+  "source_sha256": {
+    "validation\\comsol\\CoupledLossBenchmark.java": "16ab6a6391dea18affc11a74f4cdcee1873cceec7f69ba4d79fe21820e126de4",
+    "validation\\comsol\\run_validation.py": "d7c23ceb52a48ebdb161a9d6f5cfa09723e74ce5f29f697c97ca0f0ce2764305",
+    "validation\\comsol\\compare.py": "4461568b344f53dd39dc6aeccc79714a25629eb556d0a7ced300e8896b6c4587",
+    "validation\\comsol\\summarize.py": "9f312199a0e4e199404e5b5141afd7e552572dc6e74456c85e6d0c9c54e8f352",
+    "src\\supermagx\\geometry.py": "d29d0c571356646b9a80eb7de68600ed226e7e64d1e3b6274ad8cce75260c8e0",
+    "src\\supermagx\\electromagnetics\\axisymmetric.py": "43ad064af883fad79951198514236bacd8b6edb831af1473355d642abc110935",
+    "src\\supermagx\\losses\\network.py": "f186ae8b5747247f5b7d2cee01b934728149586a4d58785248337a33ad82019f",
+    "src\\supermagx\\losses\\eddy.py": "e887e5f6bc6f37c486754abb3686543d1147414a348a9ab0b1c5ec492c8961db"
+  },
+  "cases": {
+    "single_a": {
+      "reference_spec": "single_a_ultra,6e-9,0.02,0.02,0.01,0.00025,0.06,0.0000625",
+      "network_source_cases": [
+        "single_a_ultra",
+        "single_a_ultra"
+      ],
+      "native_mph_sha256": "0dc4d07db15fb27c297d2fbac1571f9516da5616c5fe5d6a35995045f808683f",
+      "fem": {
+        "transport_analytic_j": 0.07926284999225182,
+        "eddy_by_subtraction_j": 0.00812186622935121,
+        "tail_to_end_j": 0.0005807308081130383,
+        "total_to_end_j": 0.08738471622160303,
+        "end_power_w": 3.55391739747186e-09,
+        "mesh_time_change_total_percent": -0.023847608336358128,
+        "mesh_time_change_tail_percent": -0.7220418466894918,
+        "coarse_to_fine_total_percent": 0.04431733450480646
+      },
+      "edge_mesh": {
+        "eddy": {
+          "order_from_16_20_24": 1.9893163197353987,
+          "n24": 0.008077629504297128,
+          "n20": 0.008059592381979615,
+          "limit_p2": 0.008118622964109656,
+          "p2_correction": 4.0993459812527916e-05
+        },
+        "tail": {
+          "order_from_16_20_24": 1.9545213142256328,
+          "n24": 0.000572869265034231,
+          "n20": 0.0005700039434278623,
+          "limit_p2": 0.0005793813595941599,
+          "p2_correction": 6.512094559928865e-06
+        }
+      },
+      "extrapolated": {
+        "transport_j": 0.07926284999225182,
+        "eddy_j": 0.008118622964109656,
+        "tail_j": 0.0005793813595941599,
+        "total_j": 0.08738147295636148,
+        "relative_total_error_percent": -0.0037114788280945277,
+        "relative_eddy_error_percent": -0.03993251242964124,
+        "relative_tail_error_percent": -0.23237074734560048
+      }
+    },
+    "narrow": {
+      "reference_spec": "narrow_ultra,6e-9,0.008,0.016,0.003,0.0001,0.03,0.000025",
+      "network_source_cases": [
+        "narrow_fine",
+        "narrow_fine"
+      ],
+      "native_mph_sha256": "af24eceb5655c492b75f3409fd80bcf8e9e60566e93deac89318c6a25f40a7c8",
+      "fem": {
+        "transport_analytic_j": 0.0918462557968018,
+        "eddy_by_subtraction_j": 0.007458571110174755,
+        "tail_to_end_j": 0.0005800770467655226,
+        "total_to_end_j": 0.09930482690697656,
+        "end_power_w": 2.17769148451594e-19,
+        "mesh_time_change_total_percent": 0.05282578763348145,
+        "mesh_time_change_tail_percent": -0.5113355061099223,
+        "coarse_to_fine_total_percent": -0.0516977886969916
+      },
+      "edge_mesh": {
+        "eddy": {
+          "order_from_16_20_24": 1.989501857556284,
+          "n24": 0.007427700569405626,
+          "n20": 0.007410461954736519,
+          "limit_p2": 0.0074668792391081405,
+          "p2_correction": 3.9178669702514754e-05
+        },
+        "tail": {
+          "order_from_16_20_24": 1.9680748455588282,
+          "n24": 0.0005699323166771158,
+          "n20": 0.0005666206371136408,
+          "limit_p2": 0.0005774588611395591,
+          "p2_correction": 7.526544462443225e-06
+        }
+      },
+      "extrapolated": {
+        "transport_j": 0.0918462557968018,
+        "eddy_j": 0.0074668792391081405,
+        "tail_j": 0.0005774588611395591,
+        "total_j": 0.09931313503590995,
+        "relative_total_error_percent": 0.00836628912426196,
+        "relative_eddy_error_percent": 0.11139035628489058,
+        "relative_tail_error_percent": -0.45135135764505785
+      }
+    },
+    "highrho": {
+      "reference_spec": "highrho_ultra,1.2e-8,0.02,0.02,0.005,0.0001875,0.04,0.000025",
+      "network_source_cases": [
+        "highrho_fine",
+        "highrho_fine"
+      ],
+      "native_mph_sha256": "9543616a0a2265bb75118a4219da54ca2efc79e369f1c987b9324ea87dd34cd7",
+      "fem": {
+        "transport_analytic_j": 0.08960148259993683,
+        "eddy_by_subtraction_j": 0.008365377324399528,
+        "tail_to_end_j": 0.0005939757284037944,
+        "total_to_end_j": 0.09796685992433636,
+        "end_power_w": 1.88656471293698e-12,
+        "mesh_time_change_total_percent": 0.02724501877704455,
+        "mesh_time_change_tail_percent": 0.18165545718142884,
+        "coarse_to_fine_total_percent": -0.01896837992088063
+      },
+      "edge_mesh": {
+        "eddy": {
+          "order_from_16_20_24": 1.9881290600817745,
+          "n24": 0.008332783791364913,
+          "n20": 0.008313565147247765,
+          "limit_p2": 0.008376462527994795,
+          "p2_correction": 4.367873662988221e-05
+        },
+        "tail": {
+          "order_from_16_20_24": 1.9534906426343506,
+          "n24": 0.0005816438418961808,
+          "n20": 0.0005787242956915981,
+          "limit_p2": 0.0005882791741793231,
+          "p2_correction": 6.63533228314236e-06
+        }
+      },
+      "extrapolated": {
+        "transport_j": 0.08960148259993683,
+        "eddy_j": 0.008376462527994795,
+        "tail_j": 0.0005882791741793231,
+        "total_j": 0.09797794512793162,
+        "relative_total_error_percent": 0.011315258653610272,
+        "relative_eddy_error_percent": 0.13251289410383116,
+        "relative_tail_error_percent": -0.9590550509159246
+      }
+    },
+    "two": {
+      "reference_spec": "two_ultra,6e-9,0.02,0.02,0.01,0.00025,0.07,0.0000625,0.001,0.15,0.015,0.7,0.003",
+      "network_source_cases": [
+        "two_ultra",
+        "two_fine"
+      ],
+      "native_mph_sha256": "9d2f67d4990021bdd0ee55c298a16c0d597a957a32207d2a0bc1e75bfc3dc458",
+      "fem": {
+        "transport_analytic_j": 0.13583820975126268,
+        "eddy_by_subtraction_j": 0.01888820696949517,
+        "tail_to_end_j": 0.001065021763108604,
+        "total_to_end_j": 0.15472641672075785,
+        "end_power_w": 6.90153412876337e-10,
+        "mesh_time_change_total_percent": 0.008073457145996166,
+        "mesh_time_change_tail_percent": -0.6396562143101026,
+        "coarse_to_fine_total_percent": 0.1569464098040152
+      },
+      "edge_mesh": {
+        "eddy": {
+          "order_from_16_20_24": 1.989540199655927,
+          "n24": 0.018802872710185506,
+          "n20": 0.018770194377078726,
+          "limit_p2": 0.01887714164906455,
+          "p2_correction": 7.426893887904282e-05
+        },
+        "tail": {
+          "order_from_16_20_24": 1.9616133379678429,
+          "n24": 0.0010609486196572844,
+          "n20": 0.0010576002644931775,
+          "limit_p2": 0.0010685585177575274,
+          "p2_correction": 7.609898100243047e-06
+        }
+      },
+      "extrapolated": {
+        "transport_j": 0.13583820975126268,
+        "eddy_j": 0.01887714164906455,
+        "tail_j": 0.0010685585177575274,
+        "total_j": 0.15471535140032722,
+        "relative_total_error_percent": -0.007151539255645378,
+        "relative_eddy_error_percent": -0.058583223111075,
+        "relative_tail_error_percent": 0.33208285233536916
+      }
+    }
+  }
+}

@@ -2,7 +2,11 @@
 
 from .joule import JouleResult, joule_energy
 from .eddy import EddyResult, eddy_energy, eddy_energy_slab_modes
-from .network import CoupledLossResult, coupled_network_loss
+from .network import (CoupledLossOperator, CoupledLossResult,
+                      LowFrequencyLossCoefficients, compile_coupled_loss,
+                      coupled_network_loss)
 
 __all__ = ["JouleResult", "joule_energy", "EddyResult", "eddy_energy",
-           "eddy_energy_slab_modes", "CoupledLossResult", "coupled_network_loss"]
+           "eddy_energy_slab_modes", "CoupledLossOperator", "CoupledLossResult",
+           "LowFrequencyLossCoefficients", "compile_coupled_loss",
+           "coupled_network_loss"]

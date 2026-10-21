@@ -16,13 +16,20 @@ data or assert blanket agreement with a finite-element model.
 
 ## External FEM comparison
 
-Both induced-loss models are explicitly labeled as screening. The slab-mode
-option removes an empirical time constant for its **ideal 1D slab** problem;
-its centre-field and independent-axis approximations are still unvalidated
-against the full winding. A match on one
-geometry and waveform does not establish a transferable error bound across
-conductor sizes, layouts or pulse durations. The package has not yet been
-validated against converged FEM solutions over a specified design domain.
+The coupled conducting-cell model has an independent COMSOL 6.4 benchmark on
+one and two solid rectangular CuNb rings. The cases vary conductor size,
+resistivity, ramp duration, and source timing. The benchmark keeps the
+post-pulse diffusion tail and uses the physical axisymmetric power integral
+`IntSurface(2*pi*r*mf.Qh)`. See the [derivation, cases, and reproducible
+commands](loss_theory_validation.md). This is a bounded verification of the
+stated free-space, constant-resistivity, continuous-ring equations; it is not
+a validation of the complete APEX winding or composite conductor topology.
+
+The slab-mode option remains a screening approximation for an **ideal 1D
+slab**. Its centre-field and independent-axis approximations have no such
+COMSOL comparison here. A total-heat match can conceal a larger error in the
+smaller eddy or after-pulse contribution, so those quantities are reported
+separately. The FEM heat itself depends on time-output and spatial refinement.
 
 ## Required engineering gates before claiming 1% vs FEM
 
