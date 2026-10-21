@@ -112,6 +112,17 @@ design variants are not certified by those comparisons.
 
 See [accuracy notes](docs/accuracy.md) before using results as a design gate.
 
+## APEX CuNb narrow-conductor study
+
+The [op5 screening study](studies/apex_cunb_op5/op5_report.md) scans 70
+rectangular CuNb conductors with radial metal width at least 5 mm, optimizes
+the symmetric pulse ramps, and compares total pulse heat, force proxies,
+zone voltage, and average-turn temperature rise. The
+[reproducible script](studies/apex_cunb_op5/scan_narrow.py) uses the op3
+calibrated one-pole loss approximation and writes the tabulated results in
+the same directory. It is a screening study; the new geometry has no
+structural or transient thermal FEM validation.
+
 ## Licensing
 
 MIT; see [LICENSE](LICENSE).
