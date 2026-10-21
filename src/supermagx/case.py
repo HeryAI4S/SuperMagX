@@ -67,6 +67,7 @@ def run_case(case: Mapping[str, Any]) -> dict[str, Any]:
         kind = eddy.get("model", "calibrated_one_pole")
         if kind == "coupled_network":
             settings = {"resistivity": rho,
+                        "cell_distribution": eddy.get("cell_distribution", "uniform"),
                         "mutual_rtol": float(eddy.get("mutual_rtol", 1e-4)),
                         "mutual_max_order": int(eddy.get("mutual_max_order", 24))}
             qn = coupled_network_loss(

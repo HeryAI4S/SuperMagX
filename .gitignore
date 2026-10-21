@@ -5,3 +5,7 @@ __pycache__/
 build/
 dist/
 result.json
+validation/comsol/generated/
+validation/comsol/output/
+validation/comsol/*.class
+validation/comsol/case_spec.txt

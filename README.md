@@ -42,7 +42,7 @@ electromagnetics ---> losses
 | `electromagnetics` | Free-space axisymmetric field at air points and finite-cross-section zone mutual matrix |
 | `losses.joule` | Exact time integration of fixed-resistivity `I²R`; resistance follows each turn's selected current-density profile |
 | `losses.eddy` | Turn-centre screening with either calibrated one-pole response or unfitted ideal-slab diffusion modes; both include the post-waveform tail |
-| `losses.network` | Coupled conducting-cell magnetic diffusion and pulse heat, including the post-waveform eddy tail |
+| `losses.network` | Coupled conducting-cell magnetic diffusion and pulse heat, including the post-waveform eddy tail; compiled operator for repeated waveform and resistivity evaluations |
 | `thermal`, `mechanics` | Reserved boundaries; no temperature, displacement or stress field is claimed |
 
 `python -m supermagx` reads a JSON case and writes a JSON result. The output
@@ -78,14 +78,25 @@ at the turn centre and independent slab axes. Its tail heat is integrated
 after the last waveform knot. See the [derivation](docs/first_principles.md).
 
 `"eddy": {"model": "coupled_network", "radial_cells": 4,
-"axial_cells": 4, "refinement_meshes": [[2, 2], [3, 3], [4, 4]]}` selects
+"axial_cells": 4, "cell_distribution": "edge_cosine",
+"refinement_meshes": [[2, 2], [3, 3], [4, 4]]}` selects
 the coupled cell model. The same `resistivity_ohm_m` is used for transport
 and induced currents. Output separates `joule_j`, `eddy_before_tail_j`,
 `eddy_tail_j`, and `total_j`; `network_refinement` shows mesh-to-mesh changes.
 Induced heat is not attributed to individual power zones because its modes
 couple zones. Increase cell counts until **eddy heat itself** stabilizes for
 the case of interest. The slab model remains useful for broad scans because
-the network's dense mutual matrix and eigenproblem can be expensive.
+the network's dense mutual matrix and eigenproblem can be expensive. For
+repeated scans at one geometry, use `compile_coupled_loss(magnet, ...)` once
+and `operator.evaluate(waveform, resistivity=rho)` for each candidate; see
+[`examples/compiled_loss_scan.py`](examples/compiled_loss_scan.py). The
+`edge_cosine` setting places more cells near the metal boundary. Both mesh
+families require a convergence check; the measured one/two-ring COMSOL
+comparisons and full continuum derivation are in
+[`docs/loss_theory_validation.md`](docs/loss_theory_validation.md).
+The coupled model requires `source_profile = "dc_equilibrium"` for every turn;
+it rejects a prescribed uniform-current source profile because that profile
+is inconsistent with its resistive equilibrium and exact heat split.
 
 This is numerical convergence **within the stated free-space, prescribed-DC-
 current model**. Consecutive quadrature agreement is not a mathematical error
@@ -95,8 +106,9 @@ controlled `field()` accepts observation points outside metal; the separate
 does not have the same accuracy claim. Iron, leads, joints, actual supply
 circuits, conductive supports, temperature-dependent resistivity and
 mechanical preload are outside this phase. The one-pole and slab eddy models
-remain screening approximations; the cell model adds coupled azimuthal
-diffusion within the metal but still needs mesh and FEM validation.
+remain screening approximations. The cell model has independent COMSOL 6.4
+checks on representative one/two-ring cases, but the full winding and all
+design variants are not certified by those comparisons.
 
 See [accuracy notes](docs/accuracy.md) before using results as a design gate.
 

@@ -6,7 +6,7 @@ from scipy.integrate import quad
 
 from supermagx.excitation import PiecewiseLinearCurrent
 from supermagx.geometry import Magnet, RectTurn
-from supermagx.losses import coupled_network_loss
+from supermagx.losses import compile_coupled_loss, coupled_network_loss
 from supermagx.case import run_case
 
 
@@ -101,3 +101,48 @@ def test_json_case_reports_mesh_changes_without_claiming_fem_error():
     assert losses["network_modes"] == 3
     assert "eddy_by_zone_j" not in losses
     assert losses["network_refinement"][1]["relative_eddy_change"] > 0
+
+
+def test_compiled_operator_reuses_geometry_and_exposes_low_frequency_kernel():
+    magnet = _one_turn()
+    operator = compile_coupled_loss(magnet, radial_cells=2, axial_cells=1,
+                                    mutual_rtol=2e-4, mutual_max_order=24)
+    coefficients = operator.low_frequency_coefficients()
+    assert coefficients.zones == ("a",)
+    assert coefficients.transport_resistance_per_rho[0, 0] == pytest.approx(
+        magnet.turns[0].resistance(1.0))
+    assert coefficients.eddy_kernel_times_rho[0, 0] > 0
+    assert operator.evaluate(_pulse(), resistivity=6e-9).total_j == pytest.approx(
+        coupled_network_loss(magnet, _pulse(), resistivity=6e-9,
+                             radial_cells=2, axial_cells=1,
+                             mutual_rtol=2e-4, mutual_max_order=24).total_j)
+    for rho in (3e-9, 1.2e-8):
+        reusable = operator.evaluate(_pulse(), resistivity=rho)
+        rebuilt = coupled_network_loss(magnet, _pulse(), resistivity=rho,
+                                       radial_cells=2, axial_cells=1,
+                                       mutual_rtol=2e-4,
+                                       mutual_max_order=24)
+        assert reusable.eddy_j == pytest.approx(rebuilt.eddy_j, rel=1e-12)
+        assert reusable.transport_j == pytest.approx(rebuilt.transport_j,
+                                                      rel=1e-12)
+    slow = PiecewiseLinearCurrent((0, 1, 1.001, 2.001),
+                                  {"a": (0, 1000, 1000, 0)})
+    exact = operator.evaluate(slow, resistivity=6e-9).eddy_j
+    limit = coefficients.eddy_kernel_times_rho[0, 0]/6e-9*2*1000**2
+    assert exact == pytest.approx(limit, rel=.02)
+
+
+def test_edge_graded_cells_preserve_dc_resistance_and_positive_eddy_heat():
+    magnet = _one_turn()
+    uniform = compile_coupled_loss(magnet, radial_cells=4, axial_cells=4)
+    graded = compile_coupled_loss(magnet, radial_cells=4, axial_cells=4,
+                                  cell_distribution="edge_cosine")
+    assert graded.resistance_per_rho[0] == pytest.approx(
+        uniform.resistance_per_rho[0], rel=1e-13)
+    assert graded.evaluate(_pulse(), resistivity=6e-9).eddy_j > 0
+    with pytest.raises(ValueError, match="cell_distribution"):
+        compile_coupled_loss(magnet, cell_distribution="unknown")
+    uniform_current = Magnet((RectTurn(.1, .12, -.01, .01, "a",
+                                       source_profile="uniform"),))
+    with pytest.raises(ValueError, match="dc_equilibrium"):
+        compile_coupled_loss(uniform_current)
