@@ -196,6 +196,8 @@ def evaluate(item: tuple[float, float, str]) -> dict:
         "qzone_max_kJ": float(max(zone_qj + zone_qeddy)) / 1000,
         "fr_max_GNm3": float(max(abs(fr))) / 1e9,
         "fz_max_GNm3": float(max(abs(fz))) / 1e9,
+        # Dimensional load scale r*f_r at turn centres, not sigma_phi or
+        # von Mises stress; support reactions and stress equilibrium are absent.
         "hoop_proxy_MPa": float(max(abs(radius * fr))) / 1e6,
         "fr_integrated_total_MN": float(sum(fr * volume)) / 1e6,
         "fz_abs_integrated_total_MN": float(sum(abs(fz) * volume)) / 1e6,

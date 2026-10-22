@@ -139,7 +139,14 @@ L\dot{\boldsymbol i}+R\boldsymbol i=C_t^\mathsf T\boldsymbol v,
 -\boldsymbol\varepsilon_{\rm pre}] .
 \]
 
-准静态近似可在已证明惯性不重要时略去右端。实际计算必须描述层间接触、支撑和轴向端部边界、降温预应力，以及 Zylon/GFRP 的方向相关刚度与强度。\(rJ_\phi B_z\) 是薄环环向载荷量级代理，不是 CuNb 的 von Mises 应力，更不能与 700 MPa 许用值直接比较。当前 Python 包只给力密度/载荷代理；结构强度需独立有限元与材料数据验证。[COMSOL 洛伦兹力说明](https://doc.comsol.com/6.4/doc/com.comsol.help.comsol/comsol_ref_acdc.26.10.html)提供耦合载荷约定。
+准静态近似可在已证明惯性不重要时略去右端。实际计算必须描述层间接触、支撑和轴向端部边界、降温预应力，以及 Zylon/GFRP 的方向相关刚度与强度。径向平衡式可写为
+
+\[
+\sigma_{\phi\phi}=\sigma_{rr}
++r\partial_r\sigma_{rr}+r\partial_z\sigma_{rz}+r f_r .
+\]
+
+因此 \(r f_r=rJ_\phi B_z\) 只是应力平衡中的一个局部项，即使单位也是 Pa，也**不等于环向应力**；von Mises 还要由完整应力张量计算。现有筛选脚本以匝中心 \(B_z\) 和截面平均 \(J_\phi=I/A\) 形成 \(\max|r f_r|\)，既没有求应力平衡，也没有求径向传力、层间约束和热应力。它不能与 700 MPa 许用值直接比较，也不能用一个 FEM 点换算其他导体尺寸的应力。当前 Python 包只给力密度/载荷代理；结构强度需独立有限元与材料数据验证。[COMSOL 洛伦兹力说明](https://doc.comsol.com/6.4/doc/com.comsol.help.comsol/comsol_ref_acdc.26.10.html)提供耦合载荷约定；[COMSOL 结构力学变量表](https://doc.comsol.com/6.4/doc/com.comsol.help.sme/sme_ug_solid.07.163.html)将 `solid.mises` 定义为 von Mises 应力。
 
 ## 5. 从热源到温度场与冷却量
 
