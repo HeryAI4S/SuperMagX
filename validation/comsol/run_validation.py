@@ -22,6 +22,7 @@ COMSOL = Path(r"C:\software\comsol6.4\COMSOL64\Multiphysics\bin\win64")
 OUTPUT = HERE / "output"
 GENERATED = HERE / "generated"
 CASES = {
+    "single_a_axisym_audit": "single_a_axisym_audit,6e-9,0.02,0.02,0.01,0.001,0.06,0.00025",
     "single_a_coarse": "single_a_coarse,6e-9,0.02,0.02,0.01,0.001,0.06,0.00025",
     "single_a_fine": "single_a_fine,6e-9,0.02,0.02,0.01,0.0005,0.06,0.000125",
     "single_a_ultra": "single_a_ultra,6e-9,0.02,0.02,0.01,0.00025,0.06,0.0000625",
@@ -63,8 +64,13 @@ def run_case(case_name: str) -> dict:
         ], cwd=ROOT, stdout=log, stderr=subprocess.STDOUT,
             check=True, timeout=600)
     raw = stdout.read_text(encoding="utf-8", errors="replace")
-    if f"OUTPUT={case_name}" not in raw or "POWER_SHAPE=" not in raw:
+    if (f"OUTPUT={case_name}" not in raw or "POWER_SHAPE=" not in raw
+            or "POWER_AXISYM_MAX_REL=" not in raw):
         raise RuntimeError(f"COMSOL result missing; inspect {stdout}")
+    axisym_error = float(re.search(
+        r"POWER_AXISYM_MAX_REL=([^\r\n]+)", raw).group(1))
+    if not np.isfinite(axisym_error) or axisym_error > 1e-9:
+        raise RuntimeError("COMSOL volume and section integrals disagree")
     values = np.array([[float(a), float(b)] for a, b in
                        re.findall(r"^DATA,([^,]+),([^\r\n]+)", raw, re.M)])
     if len(values) < 3 or not np.all(np.diff(values[:, 0]) > 0):
@@ -85,7 +91,8 @@ def run_case(case_name: str) -> dict:
     result = {
         "case": case_name, "spec": spec, "samples": len(values),
         "comsol_version": "6.4.0.429",
-        "power_expression": "IntSurface(2*pi*r*mf.Qh)",
+        "power_expression": "IntSurface(mf.Qh, intvolume=on)",
+        "axisym_volume_section_max_relative_difference": axisym_error,
         "pulse_heat_j": integrate(values[before]),
         "tail_heat_to_end_j": integrate(values[after]),
         "total_heat_to_end_j": integrate(values),

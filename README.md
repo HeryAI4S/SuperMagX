@@ -70,6 +70,11 @@ complementary elliptic parameter formed from physical separation; near-axis
 radial fields use the Maxwell-series limit. There is no empirical
 magnetic-field multiplier in this package.
 
+The `uniform` option explicitly counts the prescribed metal current's
+`I²R` heat in Python. COMSOL's External Current Density feature excludes
+the external source's own Joule loss by default; a like-for-like comparison
+must enable its loss contribution or provide that heat source separately.
+
 For JSON losses, `"eddy": {"model": "slab_modes", "modes": 16}` selects an
 unfitted ideal-slab diffusion expansion. The existing `"eddy": {"gamma":
 ...}` selects the calibrated one-pole screen. The slab model resolves odd
@@ -98,6 +103,13 @@ The coupled model requires `source_profile = "dc_equilibrium"` for every turn;
 it rejects a prescribed uniform-current source profile because that profile
 is inconsistent with its resistive equilibrium and exact heat split.
 
+The modal pulse integrals are evaluated in batches over diffusion modes.
+The COMSOL benchmark pins the revolved-volume convention explicitly and
+checks it against cross-section integration with the `2*pi*r` Jacobian.
+The stand-alone [Maxwell-to-model theory reference](docs/theory_from_maxwell.md)
+derives the field, transport and induced heat, thermal, and structural
+equations and records the implementation and validation boundaries.
+
 This is numerical convergence **within the stated free-space, prescribed-DC-
 current model**. Consecutive quadrature agreement is not a mathematical error
 certificate or a guarantee of 1% agreement with COMSOL. The precision-
@@ -121,7 +133,10 @@ zone voltage, and average-turn temperature rise. The
 [reproducible script](studies/apex_cunb_op5/scan_narrow.py) uses the op3
 calibrated one-pole loss approximation and writes the tabulated results in
 the same directory. It is a screening study; the new geometry has no
-structural or transient thermal FEM validation.
+structural or transient thermal FEM validation. A later op5 coupled COMSOL
+run is recorded in the study report; its heat-source/thermal-energy balance
+still needs resolution before the analytic screen is accepted as a validated
+thermal prediction.
 
 ## Licensing
 

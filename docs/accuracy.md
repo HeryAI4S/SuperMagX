@@ -19,9 +19,12 @@ data or assert blanket agreement with a finite-element model.
 The coupled conducting-cell model has an independent COMSOL 6.4 benchmark on
 one and two solid rectangular CuNb rings. The cases vary conductor size,
 resistivity, ramp duration, and source timing. The benchmark keeps the
-post-pulse diffusion tail and uses the physical axisymmetric power integral
-`IntSurface(2*pi*r*mf.Qh)`. See the [derivation, cases, and reproducible
-commands](loss_theory_validation.md). This is a bounded verification of the
+post-pulse diffusion tail and uses the physical axisymmetric power integral.
+The archived benchmark used `IntSurface(2*pi*r*mf.Qh)` with cross-section
+integration. The current benchmark sets `intvolume=on` and integrates
+`mf.Qh`, checking the two conventions independently. See the
+[derivation, cases, and reproducible commands](loss_theory_validation.md).
+This is a bounded verification of the
 stated free-space, constant-resistivity, continuous-ring equations; it is not
 a validation of the complete APEX winding or composite conductor topology.
 

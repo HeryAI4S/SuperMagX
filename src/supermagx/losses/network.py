@@ -16,7 +16,7 @@ from supermagx.electromagnetics import AxisymmetricMagnetostatics
 from supermagx.excitation import PiecewiseLinearCurrent
 from supermagx.geometry import Magnet, RectTurn
 
-from .eddy import _filtered_slope_integral
+from .eddy import _filtered_slope_integrals
 
 
 @dataclass(frozen=True)
@@ -62,7 +62,7 @@ class CoupledLossOperator:
     forcing: np.ndarray
 
     def low_frequency_coefficients(self) -> LowFrequencyLossCoefficients:
-        """Return the discretized first-principles alpha/rho, beta*rho forms.
+        """Return the discretized slow-limit alpha*rho + beta/rho forms.
 
         For slow changes ``y_m ≈ -F_m I_dot/(rho*lambda_m^unit)``. Thus
         ``K = F_zone.T diag(1/lambda_unit) F_zone`` is symmetric positive
@@ -120,13 +120,11 @@ class CoupledLossOperator:
 
         rates = resistivity*self.rates_per_rho
         modal_slopes = self.forcing@(np.diff(currents, axis=1)/durations)
-        before = tail = 0.0
-        for rate, slopes in zip(rates, modal_slopes):
-            tau = 1/float(rate)
-            integral, remaining = _filtered_slope_integral(-slopes*tau,
-                                                             durations, tau)
-            before += float(rate)*integral
-            tail += float(rate)*remaining
+        taus = 1/rates
+        integrals, remainders = _filtered_slope_integrals(
+            -modal_slopes*taus[:, None], durations, taus)
+        before = float(np.dot(rates, integrals))
+        tail = float(np.dot(rates, remainders))
         if before < 0 or tail < 0:
             raise ArithmeticError("negative modal heat from time integration")
         induced = before+tail
