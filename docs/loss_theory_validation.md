@@ -177,15 +177,25 @@ second benchmark uses two isolated rings, two independently timed current
 sources, and the same material law. Each COMSOL case is solved with two
 metal-mesh/time-output resolutions; a larger air domain is checked separately.
 
-**Axisymmetric integration audit:** COMSOL's Java `IntSurface` operator in
-this model integrates the \(r,z\) cross-section. Its output for `expr=1`
-was \(0.0004\,\mathrm{m}^2\) for the 20×20 mm ring. Physical revolved volume
-was \(\int_A 2\pi r\,\mathrm dA=0.00027646015\,\mathrm{m}^3\). Therefore
-the power expression is `IntSurface(2*pi*r*mf.Qh)`, not
-`IntSurface(mf.Qh)`. The latter caused a spurious roughly 32% discrepancy in
-the first comparison. An independent `2*pi*r*rho*mf.Jphi^2` integration
-matched `2*pi*r*mf.Qh` at the diagnostic time; the two are the same loss
-and are never added.
+**Axisymmetric integration audit:** The archived benchmark's `IntSurface`
+node integrated only the \(r,z\) cross-section. Its output for `expr=1`
+was \(0.0004\,\mathrm{m}^2\) for the 20×20 mm ring. The revolved volume
+was \(\int_A 2\pi r\,\mathrm dA=0.00027646015\,\mathrm{m}^3\). Under
+that **section** convention the physical power is
+`IntSurface(2*pi*r*mf.Qh)`; integrating `mf.Qh` without the Jacobian in
+that same convention caused a roughly 32% discrepancy in the first check.
+The current benchmark explicitly sets `intvolume=on` and integrates
+`mf.Qh`. It separately sets `intvolume=off` and integrates
+`2*pi*r*mf.Qh`; the two agree at all 241 saved times in the new
+`single_a_axisym_audit` run (reported maximum relative difference 0).
+Its total heat is 0.08736684170182557 J, versus 0.08736684170181795 J
+in the archived `single_a_coarse` run. The [new native-run summary](../validation/comsol/axisym_audit_result.json)
+records the case and values; the ignored MPH and trace can be regenerated.
+The historical benchmark record and
+its source hashes are retained. Never multiply by `2*pi*r` a second time
+when revolved-volume integration is enabled. An independent integration
+of `rho*mf.Jphi^2` in the same volume convention checks `mf.Qh`; these
+expressions describe the same loss and must not be added.
 
 The benchmark record reports transport heat from the exact geometric ring
 resistance, and inferred FEM eddy heat as total COMSOL heat minus that

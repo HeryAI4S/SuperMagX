@@ -2,12 +2,15 @@
 
 import numpy as np
 import pytest
+from scipy.integrate import quad
 
 from supermagx.case import run_case
 from supermagx.electromagnetics import AxisymmetricMagnetostatics
 from supermagx.excitation import PiecewiseLinearCurrent
 from supermagx.geometry import Magnet, RectTurn
-from supermagx.losses.eddy import _filtered_slope_integral
+from supermagx.losses.eddy import (
+    _filtered_slope_integral, _filtered_slope_integrals,
+)
 
 
 def test_short_ramp_filtered_energy_is_positive_and_has_cubic_limit():
@@ -16,6 +19,30 @@ def test_short_ramp_filtered_energy_is_positive_and_has_cubic_limit():
         np.array([1.0]), np.array([duration]), 1.0)
     assert before == pytest.approx(duration**3/3, rel=2e-8, abs=0)
     assert tail == pytest.approx(duration**2/2, rel=2e-8, abs=0)
+
+
+def test_batched_modal_integral_matches_independent_transient_quadrature():
+    durations = np.array([1e-6, 1e-3, 1e-2])
+    taus = np.array([1e-8, 1e-3, 10.0])
+    drives = np.array([[2.0, -1.0, 0.0],
+                       [0.5, 1.5, -0.8],
+                       [-1.0, 0.2, 0.4]])
+    before, tail = _filtered_slope_integrals(drives, durations, taus)
+    assert before.shape == tail.shape == (3,)
+    for mode, tau in enumerate(taus):
+        y = 0.0
+        expected = 0.0
+        for drive, duration in zip(drives[mode], durations):
+            boundary_layer = [t for t in (5*tau, 20*tau)
+                              if 0 < t < duration]
+            expected += quad(
+                lambda t: (drive+(y-drive)*np.exp(-t/tau))**2,
+                0.0, duration, points=boundary_layer,
+                epsabs=1e-14, epsrel=1e-13,
+            )[0]
+            y = drive+(y-drive)*np.exp(-duration/tau)
+        assert before[mode] == pytest.approx(expected, rel=2e-11, abs=1e-18)
+        assert tail[mode] == pytest.approx(y*y*tau/2, rel=2e-11, abs=1e-18)
 
 
 def test_slab_modes_converge_to_quasistatic_joule_formula_for_slow_ramp():

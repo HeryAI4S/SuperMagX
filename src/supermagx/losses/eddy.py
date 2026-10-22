@@ -64,6 +64,46 @@ def _filtered_slope_integral(slopes: np.ndarray, durations: np.ndarray,
     return integral, tail
 
 
+def _filtered_slope_integrals(
+    drives: np.ndarray, durations: np.ndarray, taus: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Integrate independent first-order modes in one pass over time knots.
+
+    Each row solves ``tau*y' + y = drive`` from a relaxed initial state.
+    The returned arrays contain ``integral(y² dt)`` before the final knot
+    and the exact infinite-time decay integral after that knot.
+    """
+    drives = np.asarray(drives, dtype=float)
+    durations = np.asarray(durations, dtype=float)
+    taus = np.asarray(taus, dtype=float)
+    if (drives.ndim != 2 or durations.ndim != 1 or taus.ndim != 1
+            or drives.shape != (len(taus), len(durations))
+            or np.any(~np.isfinite(drives))
+            or np.any(~np.isfinite(durations))
+            or np.any(~np.isfinite(taus))
+            or np.any(durations <= 0) or np.any(taus <= 0)):
+        raise ValueError("invalid modal drives, durations or time constants")
+    state = np.zeros(len(taus))
+    before = np.zeros(len(taus))
+    for column, duration in enumerate(durations):
+        drive = drives[:, column]
+        x = duration/taus
+        short = x < .2
+        if np.any(short):
+            values = (state[short, None]
+                      + (drive[short]-state[short])[:, None]
+                      * (-np.expm1(-x[short, None]*_GAUSS_X)))
+            before[short] += duration*np.sum(_GAUSS_W*values*values, axis=1)
+        if np.any(~short):
+            delta = state[~short]-drive[~short]
+            before[~short] += (
+                drive[~short]**2*duration
+                + 2*drive[~short]*delta*taus[~short]*(-np.expm1(-x[~short]))
+                + delta**2*taus[~short]/2*(-np.expm1(-2*x[~short])))
+        state += (drive-state)*(-np.expm1(-x))
+    return before, state*state*taus/2
+
+
 def eddy_energy(magnet: Magnet, waveform: PiecewiseLinearCurrent, *,
                 resistivity: float, gamma: float,
                 field_order: int = 6) -> EddyResult:
@@ -134,21 +174,21 @@ def eddy_energy_slab_modes(magnet: Magnet, waveform: PiecewiseLinearCurrent,
     field_model = AxisymmetricMagnetostatics(magnet)
     by_zone = {zone: 0.0 for zone in zones}
     before_tail = tail_total = 0.0
+    odd = 2*np.arange(modes)+1
     for turn in magnet.turns:
         br, bz = field_model.screening_coefficients(
             turn.r_center, turn.z_center, order=field_order)
         local_before = local_tail = 0.0
         for dimension, coefficients in ((turn.width, bz), (turn.height, br)):
             slopes = coefficients@current_slopes
-            for mode in range(modes):
-                odd = 2*mode+1
-                tau = MU0*dimension**2/(pi*pi*resistivity*odd*odd)
-                factor = (8*turn.metal_volume*dimension**2
-                          /(pi**4*resistivity*odd**4))
-                integral, tail = _filtered_slope_integral(slopes, durations,
-                                                          tau)
-                local_before += factor*integral
-                local_tail += factor*tail
+            taus = MU0*dimension**2/(pi*pi*resistivity*odd*odd)
+            factors = (8*turn.metal_volume*dimension**2
+                       /(pi**4*resistivity*odd**4))
+            integrals, tails = _filtered_slope_integrals(
+                np.broadcast_to(slopes, (modes, len(durations))),
+                durations, taus)
+            local_before += float(np.dot(factors, integrals))
+            local_tail += float(np.dot(factors, tails))
         by_zone[turn.zone] += local_before+local_tail
         before_tail += local_before
         tail_total += local_tail

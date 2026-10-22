@@ -134,13 +134,29 @@ public class CoupledLossBenchmark {
 
     model.result().numerical().create("power", "IntSurface");
     model.result().numerical("power").selection().named(allMetal);
-    // IntSurface integrates the r-z cross-section only. Revolved power
-    // requires the explicit Jacobian 2*pi*r.
-    model.result().numerical("power").set("expr", "2*pi*r*mf.Qh");
+    // Pin the axisymmetric volume convention; never rely on the node default.
+    model.result().numerical("power").set("intvolume", "on");
+    model.result().numerical("power").set("expr", "mf.Qh");
     model.result().numerical("power").set("unit", "W");
     model.result().numerical("power").set("innerinput", "all");
     double[][] powers = model.result().numerical("power").getReal();
     System.out.println("POWER_SHAPE=" + powers.length + "x" + powers[0].length);
+    model.result().numerical().create("powerSection", "IntSurface");
+    model.result().numerical("powerSection").selection().named(allMetal);
+    model.result().numerical("powerSection").set("intvolume", "off");
+    model.result().numerical("powerSection").set("expr", "2*pi*r*mf.Qh");
+    model.result().numerical("powerSection").set("unit", "W");
+    model.result().numerical("powerSection").set("innerinput", "all");
+    double[] sectionPowers = model.result().numerical("powerSection").getReal()[0];
+    double axisymError = 0;
+    for (int j=0; j<powers[0].length; j++)
+      axisymError = Math.max(axisymError,
+          Math.abs(powers[0][j]-sectionPowers[j]) /
+          Math.max(1.0, Math.abs(powers[0][j])));
+    System.out.println(String.format(Locale.US,
+        "POWER_AXISYM_MAX_REL=%.15g", axisymError));
+    if (axisymError > 1e-9)
+      throw new IllegalStateException("axisymmetric integration mismatch");
     model.result().numerical().create("current", "EvalGlobal");
     model.result().numerical("current").set("expr", "mf.ICoil_1");
     model.result().numerical("current").set("innerinput", "all");
@@ -161,12 +177,13 @@ public class CoupledLossBenchmark {
     for (int j=0; j<coilCurrents[0].length; j++)
       System.out.println(String.format(Locale.US, "CURRENT,%.15g,%.15g",
           j*dt, coilCurrents[0][j]));
-    String[] diagnostics = {"2*pi*r", "mf.Jphi", "2*pi*r*rho*mf.Jphi^2",
-                            "2*pi*r*mf.Qh"};
+    String[] diagnostics = {"1", "mf.Jphi/(2*pi*r)",
+                            "rho*mf.Jphi^2", "mf.Qh"};
     for (int k=0; k<diagnostics.length; k++) {
       String tag = "diag" + k;
       model.result().numerical().create(tag, "IntSurface");
       model.result().numerical(tag).selection().named(allMetal);
+      model.result().numerical(tag).set("intvolume", "on");
       model.result().numerical(tag).set("expr", diagnostics[k]);
       model.result().numerical(tag).set("innerinput", "all");
       double[][] value = model.result().numerical(tag).getReal();

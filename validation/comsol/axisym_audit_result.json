@@ -1,0 +1,15 @@
+{
+  "case": "single_a_axisym_audit",
+  "comsol_version": "6.4.0.429",
+  "spec": "single_a_axisym_audit,6e-9,0.02,0.02,0.01,0.001,0.06,0.00025",
+  "samples": 241,
+  "volume_expression": "IntSurface(mf.Qh, intvolume=on)",
+  "section_expression": "IntSurface(2*pi*r*mf.Qh, intvolume=off)",
+  "axisym_volume_section_max_relative_difference": 0.0,
+  "pulse_heat_j": 0.08676892661989147,
+  "tail_heat_to_end_j": 0.0005979150819341082,
+  "total_heat_to_end_j": 0.08736684170182557,
+  "end_power_w": 3.59941379414173e-09,
+  "historical_single_a_coarse_total_heat_j": 0.08736684170181795,
+  "notes": "Separate native run using the same geometry, material and waveform as the archived single_a_coarse case. The ignored MPH and stdout can be regenerated with run_validation.py."
+}
