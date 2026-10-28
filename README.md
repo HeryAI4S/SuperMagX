@@ -112,6 +112,10 @@ design variants are not certified by those comparisons.
 
 See [accuracy notes](docs/accuracy.md) before using results as a design gate.
 
+## Current APEX model and constraints
+
+[APEX physics-model specifications](docs/apex/README.md) capture the active 20 T / 200 mm Cu–Nb project requirements (including **<25 kA per supply**), the M1 electromagnetic equations and code mapping, and the remaining FEM/energy/force verification gates. These specifications build on the existing Green-kernel electromagnetics and finite-diffusion loss models; historical OP5 screening results are retained but are not current feasible-design certification.
+
 ## APEX CuNb narrow-conductor study
 
 The [op5 screening study](studies/apex_cunb_op5/op5_report.md) scans 70

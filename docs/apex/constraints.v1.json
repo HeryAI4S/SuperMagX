@@ -1,0 +1,58 @@
+{
+  "schema": "supermagx.apex.constraints.v1",
+  "as_of": "2026-10-28",
+  "status": "research_baseline_not_design_freeze",
+  "units": "SI",
+  "field": {
+    "center_target_t": 20,
+    "magnetostatic_target": true
+  },
+  "geometry": {
+    "warm_bore_diameter_m": 0.2,
+    "winding_inner_diameter_baseline_m": 0.26,
+    "turn_geometry_frozen": false
+  },
+  "operating": {
+    "temperature_k": 77,
+    "coolant": "LN2_immersion"
+  },
+  "supply": {
+    "minimum_independent": 3,
+    "initial_search_maximum": 6,
+    "absolute_peak_current_strict_max_a": 25000,
+    "absolute_terminal_voltage_max_v": 30000
+  },
+  "waveform": {
+    "flat_top_s": 0.001,
+    "rise_s": null,
+    "fall_s": null,
+    "dynamic_field_not_yet_verified": true
+  },
+  "structure": {
+    "load_bearing_metal_shell_allowed": false,
+    "inner_support_topologies": [
+      "S0_none",
+      "S1_slotted_G10_GFRP"
+    ],
+    "S1_thickness_search_m": [
+      0.002,
+      0.012
+    ],
+    "S1_channels": "straight_axial",
+    "stress_research_target_pa": 700000000,
+    "stress_target_is_verified_allowable": false
+  },
+  "materials": {
+    "conductor": "Cu-Nb",
+    "resistivity_77k_ohm_m": null
+  },
+  "m1": {
+    "profiles": [
+      "dc_equilibrium",
+      "uniform"
+    ],
+    "repository_default_profile": "dc_equilibrium",
+    "validated_for_current_apex": false
+  },
+  "note": "Reference manifest only; not connected to automatic constraint enforcement."
+}
