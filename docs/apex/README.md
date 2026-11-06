@@ -19,3 +19,8 @@ The historical [OP5 screening study](../../studies/apex_cunb_op5/op5_report.md) 
 - The historical [constraints.v1.json](constraints.v1.json) remains unchanged for provenance; **do not** treat its older 30 kV / ≥3 supply scenario as the latest design requirement.
 
 **No new claimed structural optimum:** these exact idealized annulus equations are not a predictor of actual Cu–Nb maximum stress or Zylon transverse failure.
+
+
+### M30 exact discrete-turn on-axis field feasibility (2026-11-06)
+
+[Closed-form field and 3-supply limit](M30_discrete_field_envelope.md) adds independent analytic `Bz(0,z)` for `uniform` and `dc_equilibrium` source profiles and a local metal current-density ceiling. The historical 480-turn M26-A winding attains 19.99944 T at its original currents but only **19.46774 T** with `J≤600 A/mm²` using ideal 4×8 mm² rectangular conductor. This is a fixed-geometry magnetic infeasibility test, **not** a mechanical stress or rounded-corner result. Reproduce via [example](../../examples/apex_m26_field_envelope.py) and [tests](../../tests/test_turn_axis_design.py).
