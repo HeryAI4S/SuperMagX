@@ -1,0 +1,77 @@
+{
+  "schema": "supermagx.apex.constraints.current",
+  "as_of": "2026-11-06",
+  "status": "design_requirements_not_material_certification",
+  "units": "SI",
+  "field": {
+    "center_target_t": 20,
+    "warm_bore_diameter_m": 0.2,
+    "axial_target_extent_m": 0.005,
+    "uniformity_tolerance": null,
+    "flat_top_s": 0.001,
+    "dynamic_plateau_verified": false
+  },
+  "geometry": {
+    "winding_inner_radius_reference_m": 0.13,
+    "max_outer_radius_m": null,
+    "max_axial_length_m": null,
+    "max_radial_layers": null,
+    "max_turns": null,
+    "variable_module_lengths": true
+  },
+  "conductor": {
+    "material": "Cu-Nb",
+    "prefer_small_domestically_qualified_sections_m": [
+      [
+        0.003,
+        0.006
+      ],
+      [
+        0.003,
+        0.008
+      ],
+      [
+        0.004,
+        0.008
+      ]
+    ],
+    "reference_section_m": [
+      0.004,
+      0.008
+    ],
+    "corner_radius_m": 0.0005,
+    "current_density_screening_max_a_m2": 600000000,
+    "screening_limit_is_qualified_material_allowable": false,
+    "manufacturing_strain_bend_and_77k_strength_data_required": true
+  },
+  "mechanical": {
+    "structural_priority": 2,
+    "CuNb_vm_screening_pa": 750000000,
+    "vm_limit_is_qualified_allowable": false,
+    "zylon_transverse_and_end_support_qualification_required": true,
+    "contact_and_preload_required": true,
+    "metal_load_bearing_shell_allowed": false
+  },
+  "supply": {
+    "count": 3,
+    "peak_current_strict_max_a": 25000,
+    "terminal_voltage_working_max_v": 15000,
+    "lower_voltage_comparison_v": 8000,
+    "one_section_per_circuit": true,
+    "series_modules_allowed": true,
+    "free_ramp_durations": true
+  },
+  "thermal": {
+    "temperature_initial_k": 77,
+    "coolant": "LN2_immersion",
+    "loss_minimization_priority": 4,
+    "thermal_and_cyclic_limits_still_required": true
+  },
+  "priority_order": [
+    "field_target",
+    "structural_margin",
+    "voltage_feasibility",
+    "thermal_loss"
+  ],
+  "note": "Research constraints, do not overwrite historical cases. Analytical annulus is not finite-element validated structural analysis."
+}
