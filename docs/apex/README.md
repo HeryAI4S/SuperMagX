@@ -24,3 +24,8 @@ The historical [OP5 screening study](../../studies/apex_cunb_op5/op5_report.md) 
 ### M30 exact discrete-turn on-axis field feasibility (2026-11-06)
 
 [Closed-form field and 3-supply limit](M30_discrete_field_envelope.md) adds independent analytic `Bz(0,z)` for `uniform` and `dc_equilibrium` source profiles and a local metal current-density ceiling. The historical 480-turn M26-A winding attains 19.99944 T at its original currents but only **19.46774 T** with `J≤600 A/mm²` using ideal 4×8 mm² rectangular conductor. This is a fixed-geometry magnetic infeasibility test, **not** a mechanical stress or rounded-corner result. Reproduce via [example](../../examples/apex_m26_field_envelope.py) and [tests](../../tests/test_turn_axis_design.py).
+
+
+### M31: Increase turn count without assuming structural safety
+
+[Deterministic axial/radial turn-growth calculation](../../studies/apex_turn_growth/README.md) uses the already-verified finite-turn closed-form field coefficient and three-supply mapping. Increasing 8-layer turns from 480 to 640 reduces the calculated equal-current 20 T load from 19.725 to 18.398 kA, under a rounded-area 600 A/mm² screening threshold (field geometry still rectangular). This does **not** establish a structural or voltage optimum.
